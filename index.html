@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+    <head>
+        <title>WebSocket Test</title>
+    </head>
+    <body>
+        <h1>WebSocket Test</h1>
+        <p>This is a simple WebSocket test page.</p>
+        <input type="text" id="ws-uri" placeholder="Enter WebSocket URI" />
+        <br />
+        <button id="connect-button">Connect</button>
+        <br />
+        <input
+            type="text"
+            id="key1-input"
+            placeholder="Enter character of key"
+        />
+        <button id="key1-button">key1</button>
+        <script>
+            const connectButton = document.getElementById("connect-button");
+            connectButton.addEventListener("click", () => {
+                const wsUri = document.getElementById("ws-uri").value;
+                const websocket = new WebSocket(wsUri);
+                websocket.addEventListener("open", () => {
+                    console.log("CONNECTED");
+
+                    const key1Button = document.getElementById("key1-button");
+                    key1Button.addEventListener("click", () => {
+                        const key1Input = document.getElementById("key1-input");
+                        const keyValue = key1Input.value;
+                        console.log(`SENT: key1: ${keyValue}`);
+                        websocket.send(keyValue);
+                    });
+
+                    websocket.addEventListener("error", (e) => {
+                        console.log(`ERROR`);
+                    });
+
+                    websocket.addEventListener("message", (e) => {
+                        console.log(`RECEIVED: ${e.data}`);
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
