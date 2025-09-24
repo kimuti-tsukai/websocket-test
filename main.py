@@ -121,8 +121,8 @@ async def echo(keyhandler: KeyEventHandler, websocket):
 
 
 async def main():
-    ip = get_local_ip()
-    port = 8001
+    ip = "0.0.0.0"
+    port = 8765
     print(f"Server started at {ip}:{port}")
 
     keyhandler = KeyEventHandler()

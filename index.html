@@ -1,46 +1,109 @@
 <!doctype html>
 <html>
     <head>
-        <title>WebSocket Test</title>
+        <meta charset="utf-8" />
+        <title>WS Client (for GitHub Pages)</title>
+        <style>
+            body {
+                font-family: system-ui, sans-serif;
+                max-width: 720px;
+                margin: 2rem;
+            }
+            #log {
+                white-space: pre-wrap;
+                border: 1px solid #ddd;
+                padding: 8px;
+                min-height: 160px;
+                background: #fafafa;
+            }
+            input[type="text"] {
+                width: 60%;
+            }
+        </style>
     </head>
     <body>
-        <h1>WebSocket Test</h1>
-        <p>This is a simple WebSocket test page.</p>
-        <input type="text" id="ws-uri" placeholder="Enter WebSocket URI" />
-        <br />
-        <button id="connect-button">Connect</button>
-        <br />
-        <input
-            type="text"
-            id="key1-input"
-            placeholder="Enter character of key"
-        />
-        <button id="key1-button">key1</button>
+        <h1>WebSocket Client</h1>
+        <p>
+            接続先（wss URL）:
+            <input
+                id="url"
+                type="text"
+                value=""
+                placeholder="例: wss://abcd1234.ngrok.io"
+            />
+        </p>
+        <p>
+            <button id="connect">Connect</button>
+            <button id="disconnect" disabled>Disconnect</button>
+        </p>
+        <p>
+            <input id="msg" placeholder="Send message..." type="text" />
+            <button id="send" disabled>Send</button>
+        </p>
+
+        <h3>ログ</h3>
+        <div id="log"></div>
+
         <script>
-            const connectButton = document.getElementById("connect-button");
-            connectButton.addEventListener("click", () => {
-                const wsUri = document.getElementById("ws-uri").value;
-                const websocket = new WebSocket(wsUri);
-                websocket.addEventListener("open", () => {
-                    console.log("CONNECTED");
+            const $ = (id) => document.getElementById(id);
+            const log = (s) => {
+                $("log").textContent += s + "\n";
+                $("log").scrollTop = $("log").scrollHeight;
+            };
 
-                    const key1Button = document.getElementById("key1-button");
-                    key1Button.addEventListener("click", () => {
-                        const key1Input = document.getElementById("key1-input");
-                        const keyValue = key1Input.value;
-                        console.log(`SENT: key1: ${keyValue}`);
-                        websocket.send(keyValue);
-                    });
+            let ws = null;
 
-                    websocket.addEventListener("error", (e) => {
-                        console.log(`ERROR`);
-                    });
+            $("connect").onclick = () => {
+                const url = $("url").value.trim();
+                if (!url) {
+                    alert(
+                        "wss URL を入力してください（例: wss://abcd1234.ngrok.io）",
+                    );
+                    return;
+                }
+                try {
+                    ws = new WebSocket(url);
+                } catch (e) {
+                    log("WebSocket error: " + e);
+                    return;
+                }
+                log("Connecting to " + url + " ...");
+                $("connect").disabled = true;
 
-                    websocket.addEventListener("message", (e) => {
-                        console.log(`RECEIVED: ${e.data}`);
-                    });
-                });
-            });
+                ws.onopen = () => {
+                    log("OPEN");
+                    $("disconnect").disabled = false;
+                    $("send").disabled = false;
+                };
+                ws.onmessage = (ev) => {
+                    log("RECV: " + ev.data);
+                };
+                ws.onclose = (ev) => {
+                    log("CLOSE code=" + ev.code + " reason=" + ev.reason);
+                    $("connect").disabled = false;
+                    $("disconnect").disabled = true;
+                    $("send").disabled = true;
+                };
+                ws.onerror = (ev) => {
+                    log("ERROR (check console)");
+                    console.error(ev);
+                };
+            };
+
+            $("disconnect").onclick = () => {
+                if (ws) ws.close();
+            };
+
+            $("send").onclick = () => {
+                const m = $("msg").value;
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    log("Not connected");
+                    return;
+                }
+                ws.send(m);
+                log("SENT: " + m);
+                $("msg").value = "";
+            };
         </script>
     </body>
 </html>
